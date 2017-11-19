@@ -74,10 +74,9 @@
 
 		<script src="js/Detector.js"></script>
 		<script src="../build/three.js"></script>
-		<script src="js/controls/TrackballControls.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/libs/dat.gui.min.js"></script>
-
+        <script src="js/controls/OrbitControls.js"></script>
 		<script src="js/loaders/LoaderSupport.js"></script>
 		<script src="js/loaders/OBJLoader2.js"></script>
 		<script>
@@ -120,52 +119,65 @@
 
 					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 					this.resetCamera();
-					this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+					// this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+					this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
 
-					var ambientLight = new THREE.AmbientLight( 0x404040 );
-					var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
-					var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
-
-					directionalLight1.position.set( -100, -50, 100 );
-					directionalLight2.position.set( 100, 50, -100 );
-
-					this.scene.add( directionalLight1 );
-					this.scene.add( directionalLight2 );
-					this.scene.add( ambientLight );
-
-					var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
-					this.scene.add( helper );
+					// var ambientLight = new THREE.AmbientLight( 0x404040 );
+					// var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					// var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+                    //
+					// directionalLight1.position.set( -100, -50, 100 );
+					// directionalLight2.position.set( 100, 50, -100 );
+                    //
+					// this.scene.add( directionalLight1 );
+					// this.scene.add( directionalLight2 );
+					// this.scene.add( ambientLight );
+                    //
+					// var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					// this.scene.add( helper );
 				};
 
-                var material = new THREE.MeshBasicMaterial( { vertexColors:
-                    true, color: 0xFFFFFF } );
-
 				OBJLoader2Example.prototype.initContent = function () {
+
+                    for(var i = 0; i < 3; i++)
+                    {
+
 					var modelName = 'female02';
 					this._reportProgress( 'Loading: ' + modelName );
 
 					var scope = this;
 					var objLoader = new THREE.OBJLoader2();
-					var callbackOnLoad = function ( event ) {
 
-                        event.detail.loaderRootNode.traverse( function( node ) {
-                            node.material = material;
-                        });
+                    objLoader.setModelName( modelName );
+                    objLoader.setUseIndices( true );
+                    objLoader.setDisregardNormals( true );
+                    objLoader.getLogger().setDebug( true );
+                        objLoader.load( 'models/tree/lm' + (i+1) + '.obj', 
+                            (function(tmp) { return function(event) {
 
-						scope.scene.add( event.detail.loaderRootNode );
-						console.log( 'Loading complete: ' + event.detail.modelName );
-						scope._reportProgress( '' );
-					};
+                                var texture = new THREE.TextureLoader().load( "models/tree/M_NASA_Home_LM" + (tmp+1) + "_BC.png" );
+                                var material = new THREE.MeshBasicMaterial( { 
+                                    vertexColors: true, 
+                                    map: texture,
+                                    color: 0xFFFFFF } );
 
-					// var onLoadMtl = function ( materials ) {
-						objLoader.setModelName( modelName );
-						// objLoader.setMaterials( materials );
-						objLoader.setUseIndices( true );
-						objLoader.setDisregardNormals( true );
-						objLoader.getLogger().setDebug( true );
-						objLoader.load( 'models/tree/full.obj', callbackOnLoad, null, null, null, false );
-					//};
-					// objLoader.loadMtl( 'obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+
+                                var root = event.detail.loaderRootNode;
+                                root.traverse( function( node ) {
+                                    node.material = material;
+                                });
+
+                                root.scale.multiplyScalar(200);
+                                root.rotation.x = - Math.PI / 2;
+
+                                scope.scene.add( root );
+                                console.log( 'Loading complete: ' + event.detail.modelName );
+                                scope._reportProgress( '' );
+                            };
+                            })(i)
+                            , null, null, null, false );
+
+                    } // for
 				};
 
 				OBJLoader2Example.prototype._reportProgress = function( content ) {
@@ -174,7 +186,7 @@
 				};
 
 				OBJLoader2Example.prototype.resizeDisplayGL = function () {
-					this.controls.handleResize();
+					// this.controls.handleResize();
 
 					this.recalcAspectRatio();
 					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
@@ -201,7 +213,7 @@
 
 				OBJLoader2Example.prototype.render = function () {
 					if ( ! this.renderer.autoClear ) this.renderer.clear();
-					this.controls.update();
+					// this.controls.update();
 					this.renderer.render( this.scene, this.camera );
 				};
 
@@ -218,15 +230,18 @@
 			var render = function () {
 				requestAnimationFrame( render );
 				app.render();
+                window.scene = app.scene;
 			};
 
 			window.addEventListener( 'resize', resizeWindow, false );
+
 
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
 			app.initContent();
 
+            // app.controls.addEventListener('change', render);
 			render();
 
 		</script>
